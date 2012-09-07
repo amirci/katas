@@ -3,28 +3,6 @@ require 'test/unit'
 class TestChop < Test::Unit::TestCase
 	
 	def chop(n, h)
-		#iterative_chop n, h
-		recursive_chop n, h
-	end
-	
-	def iterative_chop(n, h)
-		#broken
-		begin
-			low = 0
-			high = h.size
-			mid = low+(high-low/2)-1
-			
-			if h.size==0 || h.size == 1 && h[mid] != n
-				-1
-			elsif h[mid] > n
-				h.slice(low,mid)
-			elsif h[mid] < n
-				h.slice(mid,high)
-			end
-		end while low >= high
-	end
-	
-	def recursive_chop (n, h)
 		low = 0
 		high = h.size
 		mid = low+(high-low/2)-1

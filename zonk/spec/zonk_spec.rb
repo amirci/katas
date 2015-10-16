@@ -24,6 +24,8 @@ def get_score(roll)
 
   roll = roll.sort
   
+  return 1000 if roll == (1..6).to_a
+  
   return 750 if three_pairs.call
   
   repeat_score = (1..6).map do |num|
@@ -34,7 +36,7 @@ def get_score(roll)
   
   return repeat_score if repeat_score > 0
 
-  1000
+  'Zonk'
 end
 
 describe 'Zonk score' do
@@ -84,10 +86,46 @@ describe 'Zonk score' do
     end
   end
   
-  context "Score is 1000" do
-    let(:one_to_six) { -> (r) { (1..6).to_a.shuffle }}
-    it "1 to 6 returns 1000" do
-      property_of(&one_to_six).check { |roll| expect(get_score roll).to eq 1000 }
+  it "returns 1000 for 1 to 6 straight" do
+    property_of { (1..6).to_a.shuffle }.check do |roll| 
+      expect(get_score roll).to eq 1000
+    end
+  end
+  
+  # Test.assert_equals get_score([1]), 100
+  # Test.assert_equals get_score([5]), 50
+  # Test.assert_equals get_score([1,1]), 200
+  # get_score([3,4,1,1,5]); # returns 250 = points from two 1 and one 5
+  #   get_score([2,3,2,3,3,2]); # returns 500 = three of 2 + three of 3
+  #   get_score([1,1,1,1,1,5]); # returns 3050 = five 1 + one 5
+  #   get_score([2,3,4,3,6,6]); # returns "Zonk" = no combinations here
+  #   get_score([2,2,6,6,2,2]); # returns 400 = four 2, this cannot be scored as three pairs
+  #   get_score([1,3,4,3,4,1]); # returns 750 = three pairs
+  #   get_score([3,3,3,3]); # returns 600 = four of 3
+  #   get_score([1,2,3,4,5]); # returns 150 = it's not straight
+      
+  
+  it "returns 100 for each one that repeats once or twice" do
+    property_of {
+      len = range(1, 2)
+      Array.new(len) { 1 }
+    }.check do |roll|
+      expect(get_score roll).to eq (100 * roll.size)
+    end
+  end
+  
+  it "returns 50 for each five that repeats once or twice" do
+    property_of {
+      len = range(1, 2)
+      Array.new(len) { 5 }
+    }.check do |roll|
+      expect(get_score roll).to eq (50 * roll.size)
+    end
+  end
+  
+  [2, 3, 4, 6].each do |i|
+    it "returns Zonk for only #{i}" do 
+      expect(get_score [i]).to eq 'Zonk'
     end
   end
 end

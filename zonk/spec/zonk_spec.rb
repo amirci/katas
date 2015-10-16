@@ -29,9 +29,16 @@ def get_score(roll)
   return 750 if three_pairs.call
   
   repeat_score = (1..6).map do |num|
-    score=num == 1 ? 1000 : num * 100
     amount = roll.find_all { |e| e == num }.size
-    (amount >= 3 && score * (amount - 2)) || 0
+    score = 0
+    if amount > 2
+      score = (amount - 2 ) * (num == 1 ? 1000 : num * 100)
+    elsif num == 1
+      score = amount * 100
+    elsif num == 5
+      score = amount * 50
+    end
+    score 
   end.reduce(:+)
   
   return repeat_score if repeat_score > 0
@@ -62,7 +69,7 @@ describe 'Zonk score' do
       len = range(0, 6 - n)
       values = (1..6).to_a
       values.delete number
-      rolled = Array.new(n) {number} + roll_uniq(len, values)
+      rolled = Array.new(n) {number} #+ [2, 3, 4][0, [0, 5-n].max]
       rolled.shuffle
     end
   end 
@@ -103,7 +110,19 @@ describe 'Zonk score' do
   #   get_score([1,3,4,3,4,1]); # returns 750 = three pairs
   #   get_score([3,3,3,3]); # returns 600 = four of 3
   #   get_score([1,2,3,4,5]); # returns 150 = it's not straight
-      
+  {
+    [3,4,1,1,5]   => 250,
+    [2,3,2,3,3,2] => 500,
+    [1,1,1,1,1,5] => 3050,
+    [2,3,4,3,6,6] => 'Zonk',
+    [2,2,6,6,2,2] => 400,
+    [1,3,4,3,4,1] => 750,
+  }.each do |roll, expected|
+    it "returns #{expected} for #{roll}" do
+      expect(get_score roll).to eq expected
+    end
+  end
+    
   
   it "returns 100 for each one that repeats once or twice" do
     property_of {

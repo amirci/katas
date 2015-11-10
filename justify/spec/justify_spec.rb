@@ -22,9 +22,15 @@ def justify(text, width)
 end
 
 def spaces(words, width)
+  return words.first + "\n" unless words.size > 1
   total = words.map(&:size).reduce(:+)
-  spaces = width - total - words.length + 2
-  words[0..-2].join(' ') + (' ' * spaces) + words.last + "\n"
+  spaces = ' ' * ((width - total) / (words.size - 1))
+  rem = (width - total) % (words.size - 1)
+  words[0..-2].inject('') do |line, word|
+    line += word + spaces + (rem > 0 ? ' ' : '')
+    rem  -= 1 if rem  > 0
+    line
+  end + words.last + "\n"
 end
 
 def scan_line(words, width)
@@ -71,12 +77,12 @@ class Array
   end
 end
 
-RSpec::Matchers.define :starts_with_a_word do |expected|
+RSpec::Matchers.define :start_with_a_word do |expected|
   match do |actual|
     actual.match /^\w/
   end
 end
-RSpec::Matchers.define :ends_with_a_word do |expected|
+RSpec::Matchers.define :end_with_a_word do |expected|
   match do |actual|
     actual.match /\w$/
   end
@@ -89,6 +95,11 @@ describe "Justifying text - " do
   it "scan line" do
     line, words = scan_line 'laudantium debitis enim labore sonoma'.split(' '), 30
     expect(words).to eq ['sonoma']
+  end
+
+  it "returns a single line with the word" do
+    actual = justify("jonasera salam", 8)
+    expect(actual).to eq "jonasera\nsalam"
   end
 
   it "returns the same text when no counting spaces nor \\n" do
@@ -141,8 +152,11 @@ describe "Justifying text - " do
       property_of(&text).check do |text|
         lines = justify(text, width).to_lines[0..-2]
         lines.each do |line|
-          spaces = line.scan(/\s+/)
-          expect(spaces.size).to be <= 2, "Spaces are not even +/- 1 in '#{line}'"
+          spaces = line.scan(/\s+/).uniq
+          expect(spaces.size).to be_between(1, 2), "Spaces are not even +/- 1 in '#{line}'"
+          if spaces.size == 2
+            expect(spaces.map(&:size).reduce(:-).abs).to eq 1
+          end
         end
       end
     end
@@ -151,8 +165,7 @@ describe "Justifying text - " do
       property_of(&text).check do |text|
         lines = justify(text, width).to_lines[0..-2]
         lines.each do |line|
-          expect(line).to starts_with_a_word
-          expect(line).to ends_with_a_word
+          expect(line).to start_with_a_word.and end_with_a_word
         end
       end
     end
